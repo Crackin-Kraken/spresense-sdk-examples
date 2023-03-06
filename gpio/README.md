@@ -1,13 +1,13 @@
 # GPIO
 This section details the use of the GPIO pins for input, output, and interrupts
 
-## Configuration
-The pins of the Spresense can be set to one of three modes. Mode 0 is always GPIO, and modes 1 and 2 are connected to various hardware features, such
-as UART and PWM drivers. A full table showing the names of the pins and their state in each mode is given below. Pins are connected together into
+## Operation
+The pins of the Spresense can be set to one of three modes. Mode 0 is always GPIO, and modes 1, 2, and 3 are connected to various hardware features,
+such as UART and PWM drivers. A full table showing the names of the pins and their state in each mode is given below. Pins are connected together into
 groups, so changing the mode of one pin in that group will change the mode of all pins in that group to be the same.  
 
+WLCSP is the reduced 100-pin package, with fewer pins, whereas FCBGA is the full 185-pin package.  
 <table>
-<caption>Table 2. List of pins that the SDK controls.</caption>
 <colgroup>
 <col>
 <col>
@@ -820,4 +820,60 @@ groups, so changing the mode of one pin in that group will change the mode of al
 </tr>
 </tbody>
 </table>
+
+
+## Configuration
+Each pin can be configured using the `board_gpio_config` function, which takes five parameters:
+- The pin name PIN_XXX, where XXX is one of the names listed in the table above
+- The pin mode, as described in the table above
+- Whether the pin is input enabled (true) or disabled (false)
+- Whether the pin drive current is 4mA (true) or 2mA (false)
+- The state of pull up/down resistors, from PIN_FLOAT, PIN_PULLUP, PIN_PULLDOWN, and PIN_BUSKEEPER  
+For example, to have pin I2S0_BCK set as an input with an internal pulldown resistor:
+```c
+board_gpio_config(PIN_I2S0_BCK, 0, true, false, PIN_PULLDOWN);
+```
+Or, to have the same pin as an output with 2mA drive current:
+```c
+board_gpio_config(PIN_I2S0_BCK, 0, false, false, PIN_FLOAT);
+```
+
+To read an input into a variable:
+```c
+int status = board_gpio_read(PIN_I2S0_BCK);
+```
+And to set an output:
+```c
+board_gpio_write(PIN_I2S0_BCK, 1); //Write high
+```
+The output of an output pin can be disabled by writing -1 to it.
+
+## Interrupts
+A pin can be configured to trigger interrupts using the `board_gpio_intconfig` function, which takes four parameters:
+- The pin name PIN_XXX, where XXX is one of the names listed in the table above
+- The interrupt trigger, from INT_HIGH_LEVEL, INT_LOW_LEVEL, INT_RISING_EDGE, INT_FALLING_EDGE, and INT_BOTH_EDGE
+- Whether the noise filter is enabled (true) or disabled (false)
+- The name of the Interrupt Service Routine (ISR)
+For example, to have pin I2S0_BCK trigger an ISR called `handler` when its state transitions from low to high:
+```c
+board_gpio_intconfig(PIN_I2S0_BCK, INT_RISING_EDGE, false, handler);
+```
+The interrupt must then be enabled by calling `board_gpio_int` as shown:
+```c
+board_gpio_int(PIN_I2S0_BCK, true);
+```
+To later disable the interrupt call:
+```c
+board_gpio_int(PIN_I2S0_BCK, false);
+```
+
+#### Interrupt Service Routine
+The ISR must be in the format shown below:
+```c
+static int handler(int irq, FAR void *context, FAR void *arg)
+{
+	// Code
+}
+```
+
 
