@@ -71,3 +71,17 @@ else // Unfolding NuttX RTC alarms which do not support alarms longer than one m
 }
 ```
 
+### Alarm Daemon
+It is necessary to have an alarm daemon running to catch the interrupt generated from the alarm. This can be done by writing a function to do so, and
+launching it as a seperate process in the os. The process id of this should be saved, and care should be taken to ensure the process will not end
+prematurely.
+```c
+pid_t g_alarm_daemon_pid = task_create("Daemon process name", alarm_priority, alarm_stacksize, daemon_function_name, function_arguments);
+```
+
+### Alarm Handler
+The handler should take the prototype
+```c
+static void alarm_handler(int signo, FAR siginfo_t *info, FAR void *ucontext)
+```
+
